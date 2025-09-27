@@ -199,4 +199,6 @@ Nếu có bất kỳ câu hỏi nào, vui lòng liên hệ qua:
 
 ---
 
+## Note : Đây là src code mình xây dựng trong quá trình học khóa học 
+
 ⭐ **Nếu dự án này hữu ích, hãy cho một star nhé!** ⭐
