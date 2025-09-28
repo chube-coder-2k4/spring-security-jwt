@@ -6,8 +6,8 @@ spring:
     add-properties: true
   datasource:
     url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/security}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:12345}
+    username: ${POSTGRES_USER:sa}
+    password: ${POSTGRES_PASSWORD:123456}
   jpa:
     properties:
       hibernate:

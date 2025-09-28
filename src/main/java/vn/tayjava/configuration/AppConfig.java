@@ -27,7 +27,6 @@ import vn.tayjava.service.UserService;
 @RequiredArgsConstructor
 public class AppConfig {
 
-    private final UserService userService;
     private final Prefilter prefilter;
 
     @Bean
@@ -39,7 +38,7 @@ public class AppConfig {
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(false)
-                        .maxAge(3600);
+                        .maxAge(3600); // 1 hour
             }
         };
     }
@@ -55,7 +54,7 @@ public class AppConfig {
     public SecurityFilterChain configure(HttpSecurity http) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**","/swagger-ui/**").permitAll().anyRequest().authenticated()).sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).authenticationProvider(provider()).addFilterBefore(prefilter, UsernamePasswordAuthenticationFilter.class);
+                        .requestMatchers("/auth/**","/swagger-ui/**","/user/**").permitAll().anyRequest().authenticated()).sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).addFilterBefore(prefilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
     // mục đích của method này để cấu hình bảo mật cho ứng dụng, bao gồm việc tắt CSRF, cho phép truy cập không cần xác thực đến các endpoint cụ thể, và thiết lập chính sách quản lý phiên làm việc.
@@ -73,7 +72,7 @@ public class AppConfig {
     // mục đích của method này để cung cấp một AuthenticationManager, cho phép ứng dụng
 
     @Bean
-    public AuthenticationProvider provider() {
+    public AuthenticationProvider provider(UserService userService) {
         DaoAuthenticationProvider provider = new DaoAuthenticationProvider();
         provider.setPasswordEncoder(passwordEncoder());
         provider.setUserDetailsService(userService.userDetailsService());

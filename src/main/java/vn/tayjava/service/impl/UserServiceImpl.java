@@ -8,9 +8,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import vn.tayjava.configuration.AppConfig;
 import vn.tayjava.dto.request.AddressDTO;
 import vn.tayjava.dto.request.UserRequestDTO;
 import vn.tayjava.dto.response.PageResponse;
@@ -44,6 +46,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final SearchRepository searchRepository;
     private final MailService mailService;
+    private final PasswordEncoder passwordEncoder;
 
     @Override
     public UserDetailsService userDetailsService() {
@@ -54,6 +57,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public long saveUser(UserRequestDTO request) throws MessagingException, UnsupportedEncodingException {
+        String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -62,7 +66,8 @@ public class UserServiceImpl implements UserService {
                 .phone(request.getPhone())
                 .email(request.getEmail())
                 .username(request.getUsername())
-                .password(request.getPassword())
+                // call password encoder to encode password
+                .password(encodedPassword)
                 .status(request.getStatus())
                 .type(UserType.valueOf(request.getType().toUpperCase()))
                 .build();
@@ -82,9 +87,9 @@ public class UserServiceImpl implements UserService {
 
         log.info("User has saved!");
 
-        if (result != null) {
-            mailService.sendConfirmLink(user.getEmail(), (Long) user.getId(), "code@123");
-        }
+//        if (result != null) {
+//            mailService.sendConfirmLink(user.getEmail(), (Long) user.getId(), "code@123");
+//        }
 
         return (long) user.getId();
     }

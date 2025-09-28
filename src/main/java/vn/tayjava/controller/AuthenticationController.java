@@ -3,10 +3,19 @@ package vn.tayjava.controller;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import vn.tayjava.dto.request.SigninRequest;
+import vn.tayjava.dto.request.TokenResponse;
+import vn.tayjava.service.AuthenticationService;
+import vn.tayjava.service.UserService;
+
+import static org.springframework.http.HttpStatus.OK;
 
 @RestController
 @RequestMapping("/auth")
@@ -16,8 +25,26 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthenticationController {
 
+    private final AuthenticationService authenticationService;
+
     @PostMapping("/login")
-    public String login(String username, String password) {
-        return "Login success";
+    public ResponseEntity<TokenResponse> login(@RequestBody SigninRequest request) {
+        return new ResponseEntity<>(authenticationService.authenticate(request), OK);
+
+    }
+
+    @PostMapping("/access-token" )
+    public String getAccessToken(String refreshToken) {
+        return "Get access token success";
+    }
+
+    @PostMapping("/refresh-token" )
+    public String refreshToken(String refreshToken) {
+        return "Refresh token success";
+    }
+
+    @PostMapping("/logout" )
+    public String logout(String accessToken, String refreshToken) {
+        return "Logout success";
     }
 }
