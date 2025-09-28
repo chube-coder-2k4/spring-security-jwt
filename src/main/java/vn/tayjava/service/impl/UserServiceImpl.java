@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -15,6 +16,7 @@ import vn.tayjava.dto.request.UserRequestDTO;
 import vn.tayjava.dto.response.PageResponse;
 import vn.tayjava.dto.response.UserDetailResponse;
 import vn.tayjava.exception.ResourceNotFoundException;
+import vn.tayjava.exception.UserNotFoundException;
 import vn.tayjava.model.Address;
 import vn.tayjava.model.User;
 import vn.tayjava.repository.SearchRepository;
@@ -42,6 +44,12 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final SearchRepository searchRepository;
     private final MailService mailService;
+
+    @Override
+    public UserDetailsService userDetailsService() {
+        return username -> userRepository.findByUsername(username)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
 
     @Override
     @Transactional(rollbackFor = Exception.class)
