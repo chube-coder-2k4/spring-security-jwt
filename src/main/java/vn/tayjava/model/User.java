@@ -5,13 +5,13 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import vn.tayjava.util.Gender;
 import vn.tayjava.util.UserStatus;
 import vn.tayjava.util.UserType;
 
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 @Getter
 @Setter
@@ -20,7 +20,7 @@ import java.util.Set;
 @AllArgsConstructor
 @Entity
 @Table(name = "tbl_user")
-public class User extends AbstractEntity<Long> {
+public class User extends AbstractEntity<Long> implements UserDetails, java.io.Serializable {
 
     @Column(name = "first_name")
     private String firstName;
@@ -84,4 +84,28 @@ public class User extends AbstractEntity<Long> {
     @OneToMany(mappedBy = "userId")
     private Set<UserHasRole> role;
 
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        return List.of();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return false;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return false;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return false;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return false;
+    }
 }
