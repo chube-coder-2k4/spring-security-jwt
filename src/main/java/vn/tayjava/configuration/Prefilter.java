@@ -32,7 +32,7 @@ public class Prefilter extends OncePerRequestFilter {
 
         final String authorization = request.getHeader("Authorization");
         log.info("Authorization: {}", authorization);
-        if (StringUtils.isNotBlank(authorization) && !authorization.startsWith("Bearer ") ) {
+        if (StringUtils.isBlank(authorization) || !authorization.startsWith("Bearer ") ) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -53,8 +53,6 @@ public class Prefilter extends OncePerRequestFilter {
                 log.info("Token is invalid");
             }
         }
-
-
         filterChain.doFilter(request, response);
     }
 }
