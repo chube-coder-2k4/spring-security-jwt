@@ -9,20 +9,21 @@ import vn.tayjava.dto.request.TokenResponse;
 import vn.tayjava.exception.UserNotFoundException;
 import vn.tayjava.repository.UserRepository;
 import vn.tayjava.service.AuthenticationService;
+import vn.tayjava.service.JwtService;
 
 @Service
 @RequiredArgsConstructor
 public class AuthenticationImpl implements AuthenticationService {
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
+    private final JwtService jwtService;
 
     @Override
     public TokenResponse authenticate(SigninRequest request) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
         var user = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new UserNotFoundException("User not found"));
-        String accessToken = "access-token-dummy-fake";
         return TokenResponse.builder()
-                .accessToken(accessToken)
+                .accessToken(jwtService.generateToken(user))
                 .refreshToken("refresh-token")
                 .userId(1L)
                 .build();
