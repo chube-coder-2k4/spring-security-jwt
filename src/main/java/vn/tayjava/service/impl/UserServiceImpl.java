@@ -66,7 +66,6 @@ public class UserServiceImpl implements UserService {
                 .phone(request.getPhone())
                 .email(request.getEmail())
                 .username(request.getUsername())
-                // call password encoder to encode password
                 .password(encodedPassword)
                 .status(request.getStatus())
                 .type(UserType.valueOf(request.getType().toUpperCase()))

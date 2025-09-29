@@ -27,8 +27,6 @@ import vn.tayjava.service.UserService;
 @RequiredArgsConstructor
 public class AppConfig {
 
-    private final Prefilter prefilter;
-
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
@@ -51,10 +49,14 @@ public class AppConfig {
     // mục đích của method này để cung cấp một bean PasswordEncoder sử dụng thuật toán mã hóa BCrypt, giúp bảo vệ mật khẩu người dùng bằng cách mã hóa chúng trước khi lưu trữ.
 
     @Bean
-    public SecurityFilterChain configure(HttpSecurity http) throws Exception {
+    public SecurityFilterChain configure(HttpSecurity http, Prefilter prefilter) throws Exception {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**","/swagger-ui/**","/user/**").permitAll().anyRequest().authenticated()).sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).addFilterBefore(prefilter, UsernamePasswordAuthenticationFilter.class);
+                        .requestMatchers("/auth/**","/swagger-ui/**","/user/**").permitAll()
+                        .anyRequest().authenticated()
+                )
+                .sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(prefilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
     // mục đích của method này để cấu hình bảo mật cho ứng dụng, bao gồm việc tắt CSRF, cho phép truy cập không cần xác thực đến các endpoint cụ thể, và thiết lập chính sách quản lý phiên làm việc.

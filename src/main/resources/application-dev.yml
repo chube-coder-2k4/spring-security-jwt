@@ -31,5 +31,6 @@ openapi:
     title: API Document
     version: 1.0.0
 jwt:
-  timeout: 28800000
+  timeout: 86400000
   secretKey: c92a0ed7d50b0146d9dd064ffffc49b1945c8d9d236841e837bb5e4ebc08f3a1
+  expiryDay: 7

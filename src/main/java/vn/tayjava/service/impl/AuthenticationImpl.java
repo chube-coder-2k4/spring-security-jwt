@@ -24,7 +24,7 @@ public class AuthenticationImpl implements AuthenticationService {
         var user = userRepository.findByUsername(request.getUsername()).orElseThrow(() -> new UserNotFoundException("User not found"));
         return TokenResponse.builder()
                 .accessToken(jwtService.generateToken(user))
-                .refreshToken("refresh-token")
+                .refreshToken(jwtService.generateRefreshToken(user))
                 .userId(1L)
                 .build();
     }
