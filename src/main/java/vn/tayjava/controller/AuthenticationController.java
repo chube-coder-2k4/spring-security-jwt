@@ -1,6 +1,7 @@
 package vn.tayjava.controller;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -33,18 +34,8 @@ public class AuthenticationController {
 
     }
 
-    @PostMapping("/access-token" )
-    public String getAccessToken(String refreshToken) {
-        return "Get access token success";
-    }
-
-    @PostMapping("/refresh-token" )
-    public String refreshToken(String refreshToken) {
-        return "Refresh token success";
-    }
-
-    @PostMapping("/logout" )
-    public String logout(String accessToken, String refreshToken) {
-        return "Logout success";
+    @PostMapping("/refresh-token")
+    public ResponseEntity<TokenResponse> refreshToken(HttpServletRequest request) {
+        return new ResponseEntity<>(authenticationService.refresh(request), OK);
     }
 }

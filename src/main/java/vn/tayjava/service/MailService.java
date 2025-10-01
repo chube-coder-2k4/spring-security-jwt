@@ -33,17 +33,6 @@ public class MailService {
     @Value("${endpoint.confirmUser}")
     private String apiConfirmUser;
 
-    /**
-     * Send email by Google SMTP
-     *
-     * @param recipients
-     * @param subject
-     * @param content
-     * @param files
-     * @return
-     * @throws UnsupportedEncodingException
-     * @throws MessagingException
-     */
     public String sendEmail(String recipients, String subject, String content, MultipartFile[] files) throws UnsupportedEncodingException, MessagingException {
         log.info("Email is sending ...");
 
