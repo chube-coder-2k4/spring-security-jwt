@@ -16,6 +16,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 import vn.tayjava.service.JwtService;
 import vn.tayjava.service.UserService;
+import vn.tayjava.util.TokenType;
 
 import java.io.IOException;
 
@@ -38,11 +39,11 @@ public class Prefilter extends OncePerRequestFilter {
         }
         final String token = authorization.substring(7);
         log.info("Token: {}", token);
-        final String username = jwtService.extractUsername(token);
+        final String username = jwtService.extractUsername(token, TokenType.ACCESS_TOKEN);
         log.info("Username from token: {}", username);
         if(StringUtils.isNotEmpty(username) && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = userService.userDetailsService().loadUserByUsername(username);
-            if(jwtService.isTokenValid(token, userDetails)) {
+            if(jwtService.isTokenValid(token, TokenType.ACCESS_TOKEN, userDetails)) {
                 SecurityContext securityContext = SecurityContextHolder.createEmptyContext();
                 UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                 authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));

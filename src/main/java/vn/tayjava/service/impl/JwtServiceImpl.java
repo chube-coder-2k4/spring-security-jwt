@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import vn.tayjava.service.JwtService;
+import vn.tayjava.util.TokenType;
 
 import java.security.Key;
 import java.util.Date;
@@ -23,6 +24,8 @@ public class JwtServiceImpl implements JwtService {
     private String jwtSecretKey;
     @Value("${jwt.expiryDay}")
     private long jwtExpiryDay;
+    @Value("${jwt.refreshKey}")
+    private String refreshKey;
 
 
     @Override
@@ -31,14 +34,22 @@ public class JwtServiceImpl implements JwtService {
     }
 
     @Override
-    public String extractUsername(String token) {
-        return extractClaim(token, Claims::getSubject);
+    public String extractUsername(String token, TokenType type) {
+        return extractClaim(token, type, Claims::getSubject);
     }
 
     @Override
-    public boolean isTokenValid(String token, UserDetails user) {
-        final String username = extractUsername(token);
-        return username.equals(user.getUsername());
+    public boolean isTokenValid(String token,TokenType type, UserDetails user) {
+        final String username = extractUsername(token, type);
+        return (username.equals(user.getUsername()) && !isTokenExpired(token,type));
+    }
+
+    private boolean isTokenExpired(String token, TokenType type) {
+        return extractExpiration(token, type).before(new Date());
+    }
+
+    private Date extractExpiration(String token, TokenType type) {
+        return extractClaim(token,type, Claims::getExpiration);
     }
 
     @Override
@@ -46,8 +57,13 @@ public class JwtServiceImpl implements JwtService {
         return generateRefreshToken(new HashMap<>(), user);
     }
 
-    private Key getJwtSecretKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(jwtSecretKey);
+    private Key getJwtSecretKey(TokenType type) {
+        byte[] keyBytes;
+        if(type == TokenType.REFRESH_TOKEN){
+            keyBytes = Decoders.BASE64.decode(jwtSecretKey);
+        } else {
+            keyBytes = Decoders.BASE64.decode(refreshKey);
+        }
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -57,7 +73,7 @@ public class JwtServiceImpl implements JwtService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiryTime))
-                .signWith(getJwtSecretKey(), SignatureAlgorithm.HS256)
+                .signWith(getJwtSecretKey(TokenType.ACCESS_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }
 
@@ -67,18 +83,18 @@ public class JwtServiceImpl implements JwtService {
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
                 .setExpiration(new Date(System.currentTimeMillis() + expiryTime * jwtExpiryDay))
-                .signWith(getJwtSecretKey(), SignatureAlgorithm.HS256)
+                .signWith(getJwtSecretKey(TokenType.REFRESH_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }
 
-    private <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
+    private <T> T extractClaim(String token, TokenType type , Function<Claims, T> claimsResolver) {
+        final Claims claims = extractAllClaims(token, type);
         return claimsResolver.apply(claims);
     }
 
-    private Claims extractAllClaims(String token) {
+    private Claims extractAllClaims(String token, TokenType type) {
         return Jwts.parserBuilder()
-                .setSigningKey(getJwtSecretKey())
+                .setSigningKey(getJwtSecretKey(type))
                 .build()
                 .parseClaimsJws(token)
                 .getBody();

@@ -9,4 +9,6 @@ public interface AuthenticationService {
 
 
     TokenResponse refresh(HttpServletRequest request);
+
+    String logout(HttpServletRequest request);
 }

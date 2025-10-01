@@ -49,7 +49,7 @@ public class AppConfig {
 
     @Bean
     public SecurityFilterChain configure(HttpSecurity http, Prefilter prefilter) throws Exception {
-        http.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(auth -> auth.requestMatchers("/auth/**", "/swagger-ui/**", "/user/**").permitAll().anyRequest().authenticated()).sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).addFilterBefore(prefilter, UsernamePasswordAuthenticationFilter.class);
+        http.csrf(AbstractHttpConfigurer::disable).authorizeHttpRequests(auth -> auth.requestMatchers("/auth/**", "/swagger-ui/**").permitAll().anyRequest().authenticated()).sessionManagement(manager -> manager.sessionCreationPolicy(SessionCreationPolicy.STATELESS)).addFilterBefore(prefilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
     // bảo mật cho ứng dụng, bao gồm việc tắt CSRF
