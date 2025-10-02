@@ -1,6 +1,7 @@
 package vn.tayjava.service;
 
 import jakarta.servlet.http.HttpServletRequest;
+import vn.tayjava.dto.request.ChangePasswordDTO;
 import vn.tayjava.dto.request.SigninRequest;
 import vn.tayjava.dto.request.TokenResponse;
 
@@ -11,4 +12,10 @@ public interface AuthenticationService {
     TokenResponse refresh(HttpServletRequest request);
 
     String logout(HttpServletRequest request);
+
+    String forgotpassword(String email);
+
+    String resetPassword(String token);
+
+    String changePassword(ChangePasswordDTO change);
 }

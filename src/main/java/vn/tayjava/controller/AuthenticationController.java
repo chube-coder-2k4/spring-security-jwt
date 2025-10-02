@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import vn.tayjava.dto.request.ChangePasswordDTO;
 import vn.tayjava.dto.request.SigninRequest;
 import vn.tayjava.dto.request.TokenResponse;
 import vn.tayjava.service.AuthenticationService;
@@ -44,5 +45,22 @@ public class AuthenticationController {
     @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<String> logout(HttpServletRequest request) {
         return new ResponseEntity<>(authenticationService.logout(request), OK);
+    }
+
+    // forgot password
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotpassword(@RequestBody String email) {
+        return new ResponseEntity<>(authenticationService.forgotpassword(email), HttpStatus.OK);
+    }
+
+    // resetPassword
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody String token) {
+        return new ResponseEntity<>(authenticationService.resetPassword(token), HttpStatus.OK);
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordDTO request) {
+        return new ResponseEntity<>(authenticationService.changePassword(request), HttpStatus.OK);
     }
 }

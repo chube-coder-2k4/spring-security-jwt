@@ -7,7 +7,7 @@ spring:
   datasource:
     url: ${POSTGRES_URL:jdbc:postgresql://localhost:5432/security}
     username: ${POSTGRES_USER:sa}
-    password: ${POSTGRES_PASSWORD:123456}
+    password: ${POSTGRES_PASSWORD:12345}
   jpa:
     properties:
       hibernate:
@@ -35,3 +35,4 @@ jwt:
   secretKey: c92a0ed7d50b0146d9dd064ffffc49b1945c8d9d236841e837bb5e4ebc08f3a1
   expiryDay: 7
   refreshKey: 1e34c845918564fa8b0559a3d32182e2bee5e41a466e1e636f795eaa97c1ed7c
+  resetKey: 7f3c1b0e8a4f26d9c7e9f2d11a50384b62c1e77d9452fae8cb38d40a19f06b52

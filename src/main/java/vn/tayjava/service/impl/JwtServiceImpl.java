@@ -26,6 +26,8 @@ public class JwtServiceImpl implements JwtService {
     private long jwtExpiryDay;
     @Value("${jwt.refreshKey}")
     private String refreshKey;
+    @Value("${jwt.resetKey}")
+    private String resetKey;
 
 
     @Override
@@ -57,14 +59,18 @@ public class JwtServiceImpl implements JwtService {
         return generateRefreshToken(new HashMap<>(), user);
     }
 
+    @Override
+    public String generateResetToken(UserDetails user) {
+        return generateResetToken(new HashMap<>(), user);
+    }
+
     private Key getJwtSecretKey(TokenType type) {
-        byte[] keyBytes;
-        if(type == TokenType.REFRESH_TOKEN){
-            keyBytes = Decoders.BASE64.decode(jwtSecretKey);
-        } else {
-            keyBytes = Decoders.BASE64.decode(refreshKey);
+        switch (type){
+            case ACCESS_TOKEN -> {return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecretKey));}
+            case REFRESH_TOKEN -> {return Keys.hmacShaKeyFor(Decoders.BASE64.decode(refreshKey));}
+            case RESET_PASSWORD_TOKEN -> {return Keys.hmacShaKeyFor(Decoders.BASE64.decode(resetKey));}
+            default -> throw new IllegalStateException("Unexpected value: " + type);
         }
-        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     private String generateToken(Map<String, Object> claims, UserDetails userDetails) {
@@ -82,8 +88,18 @@ public class JwtServiceImpl implements JwtService {
                 .setClaims(claims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date(System.currentTimeMillis()))
-                .setExpiration(new Date(System.currentTimeMillis() + expiryTime * jwtExpiryDay))
+                .setExpiration(new Date(System.currentTimeMillis() + expiryTime))
                 .signWith(getJwtSecretKey(TokenType.REFRESH_TOKEN), SignatureAlgorithm.HS256)
+                .compact();
+    }
+
+    private String generateResetToken(Map<String, Object> claims, UserDetails userDetails) {
+        return Jwts.builder()
+                .setClaims(claims)
+                .setSubject(userDetails.getUsername())
+                .setIssuedAt(new Date(System.currentTimeMillis()))
+                .setExpiration(new Date(System.currentTimeMillis() + expiryTime * jwtExpiryDay))
+                .signWith(getJwtSecretKey(TokenType.RESET_PASSWORD_TOKEN), SignatureAlgorithm.HS256)
                 .compact();
     }
 

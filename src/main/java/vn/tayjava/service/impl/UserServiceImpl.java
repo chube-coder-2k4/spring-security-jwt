@@ -57,7 +57,6 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(rollbackFor = Exception.class)
     public long saveUser(UserRequestDTO request) throws MessagingException, UnsupportedEncodingException {
-        String encodedPassword = passwordEncoder.encode(request.getPassword());
         User user = User.builder()
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -66,7 +65,7 @@ public class UserServiceImpl implements UserService {
                 .phone(request.getPhone())
                 .email(request.getEmail())
                 .username(request.getUsername())
-                .password(encodedPassword)
+                .password(passwordEncoder.encode(request.getPassword()))
                 .status(request.getStatus())
                 .type(UserType.valueOf(request.getType().toUpperCase()))
                 .build();
@@ -90,6 +89,12 @@ public class UserServiceImpl implements UserService {
 //            mailService.sendConfirmLink(user.getEmail(), (Long) user.getId(), "code@123");
 //        }
 
+        return (long) user.getId();
+    }
+
+    @Override
+    public long saveUser(User user) {
+        userRepository.save(user);
         return (long) user.getId();
     }
 

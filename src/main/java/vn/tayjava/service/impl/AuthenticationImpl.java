@@ -3,9 +3,12 @@ package vn.tayjava.service.impl;
 import io.micrometer.common.util.StringUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import vn.tayjava.dto.request.ChangePasswordDTO;
 import vn.tayjava.dto.request.SigninRequest;
 import vn.tayjava.dto.request.TokenResponse;
 import vn.tayjava.exception.InvalidDataException;
@@ -16,17 +19,21 @@ import vn.tayjava.repository.UserRepository;
 import vn.tayjava.service.AuthenticationService;
 import vn.tayjava.service.JwtService;
 import vn.tayjava.service.TokenService;
+import vn.tayjava.service.UserService;
 import vn.tayjava.util.TokenType;
 
 import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationImpl implements AuthenticationService {
     private final UserRepository userRepository;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final TokenService tokenService;
+    private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
 
     @Override
     public TokenResponse authenticate(SigninRequest request) {
@@ -79,5 +86,54 @@ public class AuthenticationImpl implements AuthenticationService {
         return "Logout successfully";
     }
 
+    @Override
+    public String forgotpassword(String email) {
+        User us = userRepository.findByEmail(email).get();
+        if(!us.isEnabled()){
+            throw new InvalidDataException("User is not active");
+        }
 
+        String token = jwtService.generateResetToken(us);
+        // send email with reset password link
+
+        String link = String.format("curl --location 'http://localhost:80/auth/reset-password' \\\n" +
+                "--header 'accept: */*' \\\n" +
+                "--header 'Content-Type: application/json' \\\n" +
+                "--data '%s'", token);
+        log.info("--- confirm link --- = {}", link);
+        return "sent" ;
+    }
+
+    @Override
+    public String resetPassword(String token) {
+        log.info("---------- Reset password request with token: {} ----------", token);
+        final String userName = jwtService.extractUsername(token, TokenType.RESET_PASSWORD_TOKEN);
+        var user = userRepository.findByUsername(userName);
+        if(!jwtService.isTokenValid(token, TokenType.RESET_PASSWORD_TOKEN , user.get())){
+            throw new InvalidDataException("Invalid reset password token");
+        }
+        return "Reset password successfully";
+    }
+
+    @Override
+    public String changePassword(ChangePasswordDTO change) {
+        User user = isValidUser(change.getSecretKey());
+
+        if(!change.getNewPassword().equals(change.getConfirmPassword())){
+            throw new InvalidDataException("Confirm password is not match");
+        }
+
+        user.setPassword(passwordEncoder.encode(change.getNewPassword()));
+        userService.saveUser(user);
+        return "Change password successfully";
+    }
+
+    private User isValidUser(String secretKey) {
+        final String userName = jwtService.extractUsername(secretKey, TokenType.RESET_PASSWORD_TOKEN);
+        var user = userRepository.findByUsername(userName).orElseThrow(() -> new UserNotFoundException("User not found"));
+        if (!jwtService.isTokenValid(secretKey, TokenType.RESET_PASSWORD_TOKEN, user)) {
+            throw new InvalidDataException("Invalid reset password token");
+        }
+        return user;
+    }
 }
