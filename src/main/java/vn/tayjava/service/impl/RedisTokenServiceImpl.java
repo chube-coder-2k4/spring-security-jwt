@@ -11,13 +11,15 @@ import vn.tayjava.service.RedisTokenService;
 public class RedisTokenServiceImpl implements RedisTokenService {
     private final RedisTokenRepository redisTokenRepository;
 
+    @Override
     public String saveRedis(RedisToken token){
         RedisToken newToken = redisTokenRepository.save(token);
         return newToken.getId();
     }
 
-    public void deleteRedis(String id){
-        redisTokenRepository.deleteById(id);
+    @Override
+    public void deleteRedis(String username){
+        redisTokenRepository.deleteById(username);
     }
 
     @Override
