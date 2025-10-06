@@ -30,6 +30,7 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
+    @PreAuthorize("hasRole('ROLE_USER')")
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@RequestBody SigninRequest request) {
         return new ResponseEntity<>(authenticationService.authenticate(request), OK);

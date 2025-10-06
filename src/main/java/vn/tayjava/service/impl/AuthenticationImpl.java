@@ -13,13 +13,11 @@ import vn.tayjava.dto.request.SigninRequest;
 import vn.tayjava.dto.request.TokenResponse;
 import vn.tayjava.exception.InvalidDataException;
 import vn.tayjava.exception.UserNotFoundException;
+import vn.tayjava.model.RedisToken;
 import vn.tayjava.model.Token;
 import vn.tayjava.model.User;
 import vn.tayjava.repository.UserRepository;
-import vn.tayjava.service.AuthenticationService;
-import vn.tayjava.service.JwtService;
-import vn.tayjava.service.TokenService;
-import vn.tayjava.service.UserService;
+import vn.tayjava.service.*;
 import vn.tayjava.util.TokenType;
 
 import java.util.Optional;
@@ -34,6 +32,7 @@ public class AuthenticationImpl implements AuthenticationService {
     private final TokenService tokenService;
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
+    private final RedisTokenService redisTokenService;
 
     @Override
     public TokenResponse authenticate(SigninRequest request) {
@@ -42,7 +41,8 @@ public class AuthenticationImpl implements AuthenticationService {
         String accessT = jwtService.generateToken(user);
         String refreshT = jwtService.generateRefreshToken(user);
 
-        tokenService.save(Token.builder().accessToken(accessT).refreshToken(refreshT).userName(user.getUsername()).build());
+//        tokenService.save(Token.builder().accessToken(accessT).refreshToken(refreshT).userName(user.getUsername()).build());
+        redisTokenService.saveRedis(RedisToken.builder().accessToken(accessT).refreshToken(refreshT).id(user.getUsername()).resetToken(jwtService.generateResetToken(user)).build());
 
         return TokenResponse.builder()
                 .accessToken(accessT)
@@ -54,18 +54,20 @@ public class AuthenticationImpl implements AuthenticationService {
     @Override
     public TokenResponse refresh(HttpServletRequest request) {
         String token = request.getHeader("x-refresh-token");
-        if(StringUtils.isBlank(token)){
+        if (StringUtils.isBlank(token)) {
             throw new InvalidDataException("Invalid refresh token must be not blank");
         }
 
         final String userName = jwtService.extractUsername(token, TokenType.REFRESH_TOKEN);
         System.out.println(userName);
         Optional<User> user = userRepository.findByUsername(userName);
-        if(!jwtService.isTokenValid(token, TokenType.REFRESH_TOKEN , user.get())){
+        if (!jwtService.isTokenValid(token, TokenType.REFRESH_TOKEN, user.get())) {
             throw new InvalidDataException("Invalid refresh token");
         }
 
         String accessToken = jwtService.generateToken(user.get());
+
+        redisTokenService.saveRedis(RedisToken.builder().accessToken(accessToken).refreshToken(token).resetToken(jwtService.generateResetToken(user.get())).id(user.get().getUsername()).build());
         return TokenResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(token)
@@ -77,31 +79,33 @@ public class AuthenticationImpl implements AuthenticationService {
     @Override
     public String logout(HttpServletRequest request) {
         String refresh = request.getHeader("x-refresh-token");
-        if(StringUtils.isBlank(refresh)){
+        if (StringUtils.isBlank(refresh)) {
             throw new InvalidDataException("Invalid refresh token must be not blank");
         }
         final String username = jwtService.extractUsername(refresh, TokenType.REFRESH_TOKEN);
         Token currentToken = tokenService.findByUserName(username);
-        tokenService.deleteToken(currentToken);
+        redisTokenService.deleteRedis(username);
         return "Logout successfully";
     }
 
     @Override
     public String forgotpassword(String email) {
         User us = userRepository.findByEmail(email).get();
-        if(!us.isEnabled()){
+        if (!us.isEnabled()) {
             throw new InvalidDataException("User is not active");
         }
 
         String token = jwtService.generateResetToken(us);
         // send email with reset password link
 
+        redisTokenService.saveRedis(RedisToken.builder().resetToken(jwtService.generateResetToken(us)).accessToken(jwtService.generateToken(us)).refreshToken(jwtService.generateRefreshToken(us)).id(us.getUsername()).build());
+
         String link = String.format("curl --location 'http://localhost:80/auth/reset-password' \\\n" +
                 "--header 'accept: */*' \\\n" +
                 "--header 'Content-Type: application/json' \\\n" +
                 "--data '%s'", token);
         log.info("--- confirm link --- = {}", link);
-        return "sent" ;
+        return "sent";
     }
 
     @Override
@@ -109,9 +113,10 @@ public class AuthenticationImpl implements AuthenticationService {
         log.info("---------- Reset password request with token: {} ----------", token);
         final String userName = jwtService.extractUsername(token, TokenType.RESET_PASSWORD_TOKEN);
         var user = userRepository.findByUsername(userName);
-        if(!jwtService.isTokenValid(token, TokenType.RESET_PASSWORD_TOKEN , user.get())){
+        if (!jwtService.isTokenValid(token, TokenType.RESET_PASSWORD_TOKEN, user.get())) {
             throw new InvalidDataException("Invalid reset password token");
         }
+        redisTokenService.getById(userName);
         return "Reset password successfully";
     }
 
@@ -119,7 +124,7 @@ public class AuthenticationImpl implements AuthenticationService {
     public String changePassword(ChangePasswordDTO change) {
         User user = isValidUser(change.getSecretKey());
 
-        if(!change.getNewPassword().equals(change.getConfirmPassword())){
+        if (!change.getNewPassword().equals(change.getConfirmPassword())) {
             throw new InvalidDataException("Confirm password is not match");
         }
 

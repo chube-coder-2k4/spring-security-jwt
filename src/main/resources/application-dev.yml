@@ -36,3 +36,14 @@ jwt:
   expiryDay: 7
   refreshKey: 1e34c845918564fa8b0559a3d32182e2bee5e41a466e1e636f795eaa97c1ed7c
   resetKey: 7f3c1b0e8a4f26d9c7e9f2d11a50384b62c1e77d9452fae8cb38d40a19f06b52
+redis:
+  host: ${REDIS_HOST:localhost}
+  port: ${REDIS_PORT:6379}
+  password: ${REDIS_PASSWORD:}
+  lettuce:
+    pool:
+      max-active: 8
+      max-idle: 8
+      min-idle: 0
+      max-wait: -1ms
+  timeout: 60000ms
